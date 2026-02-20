@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "krakenbuster"
+version = "1.0.0"
+description = "Guided web enumeration tool wrapping ffuf, feroxbuster, gobuster, dirb, wfuzz, and dirsearch"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "AardwolfSecurity"},
+]
+dependencies = [
+    "textual>=0.50.0",
+    "click>=8.1.0",
+    "aiofiles>=23.0",
+    "rich>=13.0",
+]
+
+[project.scripts]
+krakenbuster = "krakenbuster.main:cli"
+
+[tool.setuptools.packages.find]
+include = ["krakenbuster*"]
+
+[tool.setuptools.package-data]
+krakenbuster = ["styles.tcss"]
