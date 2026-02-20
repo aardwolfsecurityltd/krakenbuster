@@ -1,0 +1,529 @@
+/* KrakenBuster Textual CSS Stylesheet */
+/* Colour scheme: dark background, cyan borders, magenta accents, green findings, red errors */
+
+Screen {
+    background: #1a1a2e;
+    color: #e0e0e0;
+}
+
+Header {
+    background: #16213e;
+    color: #e94560;
+    dock: top;
+}
+
+/* Welcome Screen */
+#welcome-container {
+    align: center middle;
+    padding: 2 4;
+}
+
+#banner {
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#tool-status {
+    border: round cyan;
+    padding: 1 2;
+    margin: 1 4;
+    background: #16213e;
+    min-width: 50;
+}
+
+#welcome-hint {
+    text-align: center;
+    margin-top: 1;
+}
+
+#continue-btn {
+    margin-top: 1;
+}
+
+/* Scan Type Screen */
+#scan-type-container {
+    padding: 2 4;
+}
+
+#scan-type-title {
+    margin-bottom: 1;
+    text-style: bold;
+}
+
+#scan-type-radio {
+    border: round cyan;
+    padding: 1 2;
+    margin: 1 0;
+    background: #16213e;
+}
+
+#scan-type-description {
+    margin: 1 0;
+    color: #a0a0a0;
+}
+
+#scan-type-hint {
+    margin-top: 1;
+    dock: bottom;
+}
+
+/* Tool Select Screen */
+#tool-select-container {
+    padding: 2 4;
+}
+
+#tool-select-title {
+    margin-bottom: 1;
+    text-style: bold;
+}
+
+#tool-radio, #dir-tool-radio, #vhost-tool-radio {
+    border: round cyan;
+    padding: 1 2;
+    margin: 1 0;
+    background: #16213e;
+}
+
+#dir-tool-label, #vhost-tool-label {
+    margin-top: 1;
+    text-style: bold;
+    color: #e94560;
+}
+
+#tool-select-hint {
+    dock: bottom;
+    margin-top: 1;
+}
+
+RadioButton {
+    margin: 0 1;
+}
+
+RadioButton:disabled {
+    color: #555555;
+    text-opacity: 50%;
+}
+
+/* Target Screen */
+#target-container {
+    padding: 2 4;
+}
+
+#target-title {
+    margin-bottom: 1;
+    text-style: bold;
+}
+
+#target-help {
+    margin-bottom: 1;
+}
+
+#target-input {
+    border: round cyan;
+    margin: 1 0;
+}
+
+#target-error {
+    color: red;
+    margin: 0 0 1 0;
+}
+
+#target-continue-btn {
+    margin-top: 1;
+}
+
+#target-hint {
+    dock: bottom;
+    margin-top: 1;
+}
+
+/* Wordlist Screen */
+#wordlist-container {
+    padding: 1 2;
+}
+
+#wordlist-title {
+    margin-bottom: 1;
+    text-style: bold;
+}
+
+#wordlist-search {
+    border: round cyan;
+    margin-bottom: 1;
+}
+
+#wordlist-browser {
+    height: 1fr;
+    min-height: 10;
+}
+
+#wordlist-tree {
+    width: 60%;
+    border: round cyan;
+    background: #16213e;
+    padding: 1;
+    overflow-y: auto;
+}
+
+#wordlist-preview {
+    width: 40%;
+    border: round cyan;
+    background: #16213e;
+    padding: 1;
+    margin-left: 1;
+}
+
+#wordlist-preview-content {
+    padding: 1;
+}
+
+#wordlist-manual-input {
+    border: round magenta;
+    margin: 1 0;
+}
+
+#wordlist-error {
+    color: red;
+    margin: 0 0 1 0;
+}
+
+#wordlist-continue-btn {
+    margin-top: 1;
+}
+
+#wordlist-hint {
+    margin-top: 1;
+}
+
+/* Options Screen */
+#options-container {
+    padding: 1 2;
+    overflow-y: auto;
+}
+
+#options-title {
+    margin-bottom: 1;
+    text-style: bold;
+}
+
+#vhost-options-title {
+    margin-top: 1;
+    text-style: bold;
+}
+
+.option-row {
+    height: auto;
+    margin: 0 0 1 0;
+    align: left middle;
+}
+
+.option-label {
+    width: 30;
+    padding-right: 1;
+    color: #a0c4ff;
+}
+
+.option-row Input {
+    width: 1fr;
+    border: round cyan;
+}
+
+.option-row Switch {
+    margin-left: 1;
+}
+
+#options-error {
+    color: red;
+    margin: 1 0;
+}
+
+#options-buttons {
+    margin-top: 1;
+    height: auto;
+}
+
+#options-buttons Button {
+    margin-right: 2;
+}
+
+#options-hint {
+    margin-top: 1;
+}
+
+/* Confirm Screen */
+#confirm-container {
+    padding: 1 2;
+}
+
+#confirm-title {
+    margin-bottom: 1;
+    text-style: bold;
+}
+
+#confirm-panels {
+    height: 1fr;
+    min-height: 10;
+}
+
+#confirm-summary {
+    width: 50%;
+    border: round cyan;
+    background: #16213e;
+    padding: 1 2;
+    margin-right: 1;
+}
+
+#confirm-command {
+    width: 50%;
+    border: round magenta;
+    background: #0f3460;
+    padding: 1 2;
+}
+
+#confirm-buttons {
+    margin-top: 1;
+    height: auto;
+}
+
+#confirm-buttons Button {
+    margin-right: 2;
+}
+
+/* Scanning Screen */
+#scanning-outer {
+    padding: 0;
+}
+
+#scan-top-bar {
+    dock: top;
+    height: 1;
+    background: #0f3460;
+    color: #e0e0e0;
+    padding: 0 1;
+    text-style: bold;
+}
+
+#scanning-main {
+    height: 1fr;
+}
+
+#scanning-left {
+    width: 40%;
+    min-width: 40;
+}
+
+#scanning-right {
+    width: 60%;
+}
+
+#progress-panel {
+    border: round cyan;
+    padding: 1;
+    margin: 0 1;
+    height: auto;
+    background: #16213e;
+}
+
+#scan-progress {
+    margin-bottom: 1;
+}
+
+#progress-label {
+    color: #a0c4ff;
+}
+
+#testing-label {
+    color: #e94560;
+}
+
+#stats-label {
+    color: #a0a0a0;
+    margin-top: 1;
+}
+
+#findings-panel {
+    border: round cyan;
+    margin: 1;
+    padding: 0 1;
+    height: 1fr;
+    background: #16213e;
+    overflow-y: auto;
+}
+
+#findings-count {
+    color: #00ff00;
+    text-style: bold;
+    padding: 0 0 1 0;
+}
+
+#findings-table {
+    height: 1fr;
+}
+
+#vhost-progress-panel {
+    border: round magenta;
+    padding: 1;
+    margin: 0 1;
+    height: auto;
+    background: #16213e;
+}
+
+#vhost-findings-count {
+    color: #00ff00;
+    text-style: bold;
+}
+
+#raw-output {
+    border: round cyan;
+    margin: 0 1;
+    padding: 1;
+    height: 1fr;
+    background: #0f0f23;
+}
+
+#vhost-raw-output {
+    border: round magenta;
+    margin: 0 1;
+    padding: 1;
+    height: 1fr;
+    background: #0f0f23;
+}
+
+DataTable {
+    background: #16213e;
+}
+
+DataTable > .datatable--header {
+    background: #0f3460;
+    color: cyan;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: #1a1a4e;
+}
+
+/* Summary Screen */
+#summary-container {
+    padding: 2 4;
+    overflow-y: auto;
+}
+
+#summary-content {
+    border: round cyan;
+    padding: 1 2;
+    margin-bottom: 1;
+    background: #16213e;
+}
+
+#summary-findings {
+    border: round green;
+    padding: 1 2;
+    margin-bottom: 1;
+    background: #16213e;
+}
+
+#summary-files {
+    padding: 0 2;
+    margin-bottom: 1;
+}
+
+#summary-stderr {
+    border: round red;
+    padding: 1 2;
+    margin-bottom: 1;
+    background: #2a0a0a;
+}
+
+#summary-buttons {
+    margin-top: 1;
+    height: auto;
+}
+
+#summary-buttons Button {
+    margin-right: 2;
+}
+
+/* Button styles */
+Button {
+    margin: 0 1;
+}
+
+Button.-primary {
+    background: #0f3460;
+    color: cyan;
+    border: tall cyan;
+}
+
+Button.-primary:hover {
+    background: #16213e;
+}
+
+Button.-success {
+    background: #064e3b;
+    color: #00ff00;
+    border: tall green;
+}
+
+Button.-error {
+    background: #4a0000;
+    color: red;
+    border: tall red;
+}
+
+/* Input widget global styles */
+Input {
+    background: #16213e;
+    color: #e0e0e0;
+    border: round #555555;
+}
+
+Input:focus {
+    border: round cyan;
+}
+
+/* Switch styles */
+Switch {
+    background: #16213e;
+}
+
+/* ProgressBar styles */
+ProgressBar {
+    padding: 0;
+}
+
+ProgressBar Bar {
+    color: cyan;
+    background: #333333;
+}
+
+/* Tree styles */
+Tree {
+    background: #16213e;
+    color: #e0e0e0;
+}
+
+Tree:focus {
+    border: round cyan;
+}
+
+Tree > .tree--cursor {
+    background: #0f3460;
+    color: white;
+    text-style: bold;
+}
+
+Tree > .tree--guides {
+    color: #555555;
+}
+
+/* RichLog styles */
+RichLog {
+    background: #0f0f23;
+    color: #e0e0e0;
+    scrollbar-color: cyan;
+}
+
+/* Responsive layout: narrow terminals */
+/* Textual does not have media queries, so the scanning screen */
+/* handles layout detection in Python via on_resize */

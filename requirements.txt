@@ -1,0 +1,4 @@
+textual>=0.50.0
+click>=8.1.0
+aiofiles>=23.0
+rich>=13.0

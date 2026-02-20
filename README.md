@@ -1,139 +1,187 @@
 # KrakenBuster
 
-A Go-based web enumeration tool for Kali Linux that wraps **feroxbuster** and **ffuf** to provide directory brute-forcing, vhost fuzzing, and combined scanning with an interactive terminal UI.
+A guided web enumeration tool for penetration testing on Kali Linux. KrakenBuster wraps and orchestrates six popular scanning tools through an interactive terminal UI, eliminating the need to remember flags and syntax.
 
-## Features
+## Supported Tools
 
-- **Directory brute-forcing** using feroxbuster with recursive scanning and auto-tuning
-- **Vhost fuzzing** using ffuf with Host header fuzzing
-- **Combined mode** running both scans concurrently with goroutines
-- Interactive wordlist selector with fuzzy filtering (auto-discovers Kali default wordlist paths)
-- Styled terminal output using bubbletea and lipgloss
-- JSON and text output for all scan results
-- Burp Suite proxy integration
-- Persistent configuration file at `~/.krakenbuster.conf`
-
-## Dependencies
-
-### System tools (must be in PATH)
-
-- [feroxbuster](https://github.com/epi052/feroxbuster): `apt install feroxbuster`
-- [ffuf](https://github.com/ffuf/ffuf): `apt install ffuf`
-
-If either tool is missing, the relevant scan mode is disabled with a warning rather than causing the tool to exit.
-
-### Go libraries
-
-- `github.com/charmbracelet/bubbletea`
-- `github.com/charmbracelet/lipgloss`
-- `github.com/charmbracelet/bubbles`
-- `github.com/spf13/cobra`
-- `gopkg.in/ini.v1`
-- `golang.org/x/term`
+| Tool | Directory | Vhost | DNS | Description |
+|------|-----------|-------|-----|-------------|
+| feroxbuster | Yes | - | - | Fast, recursive, auto-calibrating |
+| ffuf | Yes | Yes | - | Fastest and most flexible |
+| gobuster | Yes | Yes | Yes | Reliable multi-mode support |
+| dirb | Yes | - | - | Simple and low-noise |
+| wfuzz | Yes | Yes | - | Fine-grained response filtering |
+| dirsearch | Yes | - | - | Good defaults and extension handling |
 
 ## Installation
 
-### From source
+### Prerequisites
+
+- Python 3.11 or later
+- Kali Linux (or any Linux distribution with the scanning tools installed)
+
+### Install scanning tools
 
 ```bash
-git clone https://github.com/aardwolf-security/krakenbuster.git
-cd krakenbuster
-make build
-sudo make install
+sudo apt install feroxbuster ffuf gobuster dirb wfuzz dirsearch
 ```
 
-### Manual build
+### Install KrakenBuster
 
 ```bash
-go build -o krakenbuster .
-sudo cp krakenbuster /usr/local/bin/
+git clone https://github.com/aardwolfsecurityltd/krakenbuster.git
+cd krakenbuster
+pip install -e .
+```
+
+Or using the Makefile:
+
+```bash
+make install
 ```
 
 ## Usage
 
-### Interactive mode
+### Interactive Mode (TUI)
 
-Run without arguments to see the banner and help:
+Launch the interactive terminal UI:
 
 ```bash
 krakenbuster
 ```
 
-### Directory brute-forcing
+This guides you through:
+
+1. **Scan type selection**: directory brute-forcing, vhost fuzzing, DNS enumeration, or combined
+2. **Tool selection**: choose from available tools suited to your scan type
+3. **Target input**: enter and validate your target URL or domain
+4. **Wordlist browser**: browse and search system wordlists with recommendations
+5. **Options configuration**: tune threads, rate limits, extensions, filters, and more
+6. **Confirmation**: review your settings and the exact command before execution
+7. **Live scanning**: watch progress, raw output, and findings in real time
+8. **Results summary**: review findings breakdown and output file locations
+
+### Non-Interactive Mode (CLI)
+
+Use subcommands for scripting and automation:
+
+#### Directory brute-forcing
 
 ```bash
-# Interactive (will prompt for wordlist selection)
-krakenbuster dir --url https://target.com
-
-# Non-interactive with all options
 krakenbuster dir \
+  --tool feroxbuster \
   --url https://target.com \
-  --wordlist /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt \
-  --extensions php,html,txt,js \
-  --depth 3 \
+  --wordlist /usr/share/wordlists/dirb/common.txt \
+  --extensions php,html \
   --threads 50 \
-  --rate 200 \
-  --proxy http://127.0.0.1:8080
+  --depth 3
 ```
 
-### Vhost fuzzing
+#### Vhost fuzzing
 
 ```bash
-# Interactive
-krakenbuster vhost --target http://10.10.10.10 --domain example.com
-
-# Non-interactive with filters
 krakenbuster vhost \
-  --target http://10.10.10.10 \
+  --tool ffuf \
+  --target http://10.10.10.1 \
   --domain example.com \
   --wordlist /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
-  --filter-size 1234 \
-  --filter-words 100 \
-  --threads 40
+  --filter-size 1234
 ```
 
-### Combined mode
+#### DNS subdomain enumeration
+
+```bash
+krakenbuster dns \
+  --tool gobuster \
+  --domain example.com \
+  --wordlist /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt
+```
+
+#### Combined mode (directory + vhost)
 
 ```bash
 krakenbuster combined \
+  --dir-tool feroxbuster \
+  --vhost-tool ffuf \
   --url https://target.com \
-  --domain target.com \
-  --wordlist /usr/share/wordlists/dirbuster/directory-list-2.3-small.txt \
-  --extensions php,html \
-  --depth 2
+  --domain example.com \
+  --wordlist /usr/share/wordlists/dirb/common.txt
 ```
 
-## Global flags
+## CLI Flag Reference
+
+### Global Options
 
 | Flag | Short | Default | Description |
 |------|-------|---------|-------------|
-| `--threads` | `-t` | 50 | Number of concurrent threads |
-| `--rate` | `-r` | 200 | Requests per second |
-| `--proxy` | `-p` | (none) | HTTP proxy, e.g. `http://127.0.0.1:8080` |
-| `--output` | `-o` | `./output` | Output directory for results |
-| `--wordlist` | `-w` | (none) | Path to wordlist file (skips interactive selection) |
+| `--wordlist` | `-w` | required | Path to wordlist file |
+| `--threads` | `-t` | 50 | Number of threads |
+| `--rate` | `-r` | 200 | Rate limit (requests per second) |
+| `--proxy` | | empty | Proxy URL |
+| `--extensions` | `-x` | empty | File extensions (comma-separated) |
+| `--output-dir` | `-o` | ./output | Output directory |
+
+### `dir` Subcommand
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--tool` | required | Scanner tool (feroxbuster, ffuf, gobuster, dirb, wfuzz, dirsearch) |
+| `--url` | required | Target URL |
+| `--depth` | 3 | Recursion depth |
+| `--status-codes` | empty | Status codes to include |
+| `--filter-codes` | empty | Status codes to exclude |
+| `--filter-size` | empty | Filter by response size |
+
+### `vhost` Subcommand
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--tool` | required | Scanner tool (ffuf, gobuster, wfuzz) |
+| `--target` | required | Target URL or IP |
+| `--domain` | required | Base domain for Host header |
+| `--filter-codes` | empty | Status codes to exclude |
+| `--filter-size` | empty | Filter by response size |
+
+### `dns` Subcommand
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--tool` | required | Scanner tool (gobuster) |
+| `--domain` | required | Target domain |
+| `--resolver` | empty | Custom DNS resolver |
+| `--show-ips/--no-show-ips` | on | Show resolved IP addresses |
+
+### `combined` Subcommand
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--dir-tool` | required | Tool for directory scanning |
+| `--vhost-tool` | required | Tool for vhost fuzzing |
+| `--url` | required | Target URL |
+| `--domain` | required | Base domain for vhost |
+| `--depth` | 3 | Recursion depth for directory scan |
 
 ## Configuration
 
-On first run, KrakenBuster creates `~/.krakenbuster.conf` with default values:
+KrakenBuster stores settings in `~/.krakenbuster.conf`. This file is created automatically on first run with sensible defaults.
 
-```ini
-threads = 50
-rate = 200
-proxy =
-output_dir = ./output
-```
+Configurable options:
 
-Edit this file to change defaults. CLI flags override config file values.
+- Default threads and rate limit
+- Proxy settings
+- Output directory
+- Last used wordlist and tool preferences
 
 ## Output
 
-Results are saved to the output directory (default `./output/`) in both text and JSON formats:
+Scan results are saved to `./output/` (or the configured output directory):
 
-- Directory scans: `<hostname>_dir_<timestamp>.txt` and `.json`
-- Vhost scans: `<hostname>_vhost_<timestamp>.txt` and `.json`
+- `<hostname>_<tool>_<mode>_<timestamp>.txt`: raw output lines
+- `<hostname>_<tool>_<mode>_<timestamp>.json`: parsed findings as JSON
 
-## Wordlist discovery
+Output files are written incrementally during the scan, so partial results are preserved if a scan is interrupted.
+
+## Wordlist Discovery
 
 KrakenBuster automatically scans these Kali Linux default paths for `.txt` wordlists:
 
@@ -142,13 +190,36 @@ KrakenBuster automatically scans these Kali Linux default paths for `.txt` wordl
 - `/usr/share/dirb/wordlists/`
 - `/usr/share/dirbuster/wordlists/`
 
-Paths that do not exist are silently skipped. Press `m` in the interactive selector to enter a custom wordlist path.
+Paths that do not exist are silently skipped. Recommended wordlists for the selected scan type are marked with a star in the browser. Press `M` in the interactive selector to enter a custom wordlist path.
 
-## Makefile targets
+## Tool Dependencies
 
-- `make build`: Compile the binary
-- `make install`: Build and copy to `/usr/local/bin/`
-- `make clean`: Remove built binary
+Install all supported tools on Kali Linux:
+
+```bash
+sudo apt install feroxbuster ffuf gobuster dirb wfuzz dirsearch
+```
+
+KrakenBuster checks for tool availability at startup and disables unavailable tools in the UI. You only need the tools you plan to use.
+
+## Development
+
+```bash
+# Install in development mode
+make install
+
+# Run the tool
+make run
+
+# Clean build artefacts
+make clean
+```
+
+## Makefile Targets
+
+- `make install`: Install in editable/development mode via pip
+- `make run`: Run KrakenBuster via `python -m krakenbuster`
+- `make clean`: Remove `__pycache__` directories and output files
 
 ## Licence
 
