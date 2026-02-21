@@ -51,10 +51,14 @@ class BaseScanner(ABC):
         """
         command = self.build_command()
 
+        # Use a large line buffer limit (4MB) to handle tools like dirsearch
+        # that output ANSI progress bars using carriage returns without newlines,
+        # creating extremely long "lines" that exceed asyncio's default 64KB limit.
         self._process = await asyncio.create_subprocess_exec(
             *command,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            limit=4 * 1024 * 1024,
         )
 
         assert self._process.stdout is not None
