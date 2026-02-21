@@ -176,8 +176,8 @@ class ScanningScreen(Screen):
             except Exception:
                 pass
 
-        # Start the timer
-        self.set_interval(1.0, self._update_timer)
+        # Start the periodic stats refresh
+        self.set_interval(1.0, self._refresh_stats)
 
         # Start the scan
         self.run_worker(self._start_scan())
@@ -382,7 +382,7 @@ class ScanningScreen(Screen):
         except Exception:
             pass
 
-    def _update_timer(self) -> None:
+    def _refresh_stats(self) -> None:
         """Update the top bar and progress stats every second."""
         elapsed = time.time() - self._start_time
         elapsed_str = self._format_elapsed(elapsed)
