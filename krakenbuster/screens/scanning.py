@@ -439,8 +439,12 @@ class ScanningScreen(Screen):
         except Exception:
             pass
 
-    def _get_estimated_requests(self, elapsed: float) -> int:
-        """Get the best estimate of requests completed so far."""
+    def _get_estimated_requests(self, elapsed: float) -> int | None:
+        """Get the best estimate of requests completed so far.
+
+        Returns an int if we have a reliable estimate, or None if progress
+        is unknown (tool does not report progress and is not verbose).
+        """
         # If the tool reported its own progress, use that
         if self._progress_from_tool and self._requests_estimated > 0:
             return self._requests_estimated
@@ -449,23 +453,24 @@ class ScanningScreen(Screen):
         if self._tool_name in _VERBOSE_TOOLS:
             return self._lines_received
 
-        # For sparse tools with no progress reporting, estimate from
-        # configured rate and elapsed time, capped at total words
-        estimated = int(elapsed * self._configured_rate)
-        if self._total_words > 0:
-            estimated = min(estimated, self._total_words)
-        return max(estimated, self._requests_estimated)
+        # No reliable progress available for this tool
+        return None
 
     def _refresh_stats(self) -> None:
         """Update the top bar and progress stats every second."""
         elapsed = time.time() - self._start_time
         elapsed_str = self._format_elapsed(elapsed)
 
-        # Estimate requests completed
+        # Estimate requests completed (may be None if unknown)
         est_requests = self._get_estimated_requests(elapsed)
+        progress_known = est_requests is not None
 
-        # Calculate rate from estimated requests
-        rate = est_requests / elapsed if elapsed > 0 else 0.0
+        # Calculate rate
+        if progress_known and elapsed > 0:
+            rate = est_requests / elapsed
+            rate_str = f"{rate:.0f} req/s"
+        else:
+            rate_str = "-- req/s"
 
         # Update top bar
         tool = getattr(self.app, "selected_tool", "")
@@ -476,39 +481,55 @@ class ScanningScreen(Screen):
             top_bar = self.query_one("#scan-top-bar", Static)
             top_bar.update(
                 f"[bold]{tool}[/bold] | {target} | {wordlist} | "
-                f"Elapsed: {elapsed_str} | {rate:.0f} req/s"
+                f"Elapsed: {elapsed_str} | {rate_str}"
             )
         except Exception:
             pass
 
         # Update progress
-        if self._total_words > 0:
+        if progress_known and self._total_words > 0:
             pct = min(100, (est_requests / self._total_words) * 100)
             eta = self._estimate_eta(elapsed, est_requests, self._total_words)
+            progress_text = f"Progress: {pct:.0f}%  ({est_requests:,} / {self._total_words:,})"
+            stats_text = (
+                f"Sent: {est_requests:,}   Rate: {rate_str}   "
+                f"ETA: {eta}   Findings: {len(self._findings)}   Errors: {self._errors}"
+            )
         else:
-            pct = 0
-            eta = "--"
+            # Unknown progress: show elapsed time and findings count
+            pct = None
+            progress_text = (
+                f"Progress: scanning...  ({self._total_words:,} words in wordlist)"
+            )
+            stats_text = (
+                f"Elapsed: {elapsed_str}   Output lines: {self._lines_received:,}   "
+                f"Findings: {len(self._findings)}   Errors: {self._errors}"
+            )
 
         try:
-            progress = self.query_one("#scan-progress", ProgressBar)
-            progress.update(total=max(self._total_words, 1), progress=est_requests)
+            progress_bar = self.query_one("#scan-progress", ProgressBar)
+            if progress_known:
+                progress_bar.update(
+                    total=max(self._total_words, 1), progress=est_requests
+                )
+            else:
+                # Pulse animation: cycle progress to indicate activity
+                cycle = int(elapsed * 10) % max(self._total_words, 100)
+                progress_bar.update(
+                    total=max(self._total_words, 100), progress=cycle
+                )
         except Exception:
             pass
 
         try:
             progress_label = self.query_one("#progress-label", Label)
-            progress_label.update(
-                f"Progress: {pct:.0f}%  ({est_requests:,} / {self._total_words:,})"
-            )
+            progress_label.update(progress_text)
         except Exception:
             pass
 
         try:
             stats_label = self.query_one("#stats-label", Label)
-            stats_label.update(
-                f"Sent: ~{est_requests:,}   Rate: ~{rate:.0f} req/s   "
-                f"ETA: {eta}   Findings: {len(self._findings)}   Errors: {self._errors}"
-            )
+            stats_label.update(stats_text)
         except Exception:
             pass
 
