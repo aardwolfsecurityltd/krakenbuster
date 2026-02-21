@@ -348,7 +348,7 @@ class ScanningScreen(Screen):
         result._vhost_raw_path = self._vhost_raw_path
         result._vhost_json_path = self._vhost_json_path
 
-        self.app.call_from_thread(self.app.go_to_summary, result)
+        self.app.call_later(self.app.go_to_summary, result)
 
     def _update_findings_table(self, finding: Finding) -> None:
         """Add a finding to the primary findings table."""
