@@ -91,15 +91,16 @@ async def write_json_results(path: Path, findings: list[Finding]) -> None:
 
 def parse_status_code(line: str) -> int | None:
     """Extract HTTP status code from a tool output line."""
-    # Common patterns across tools
+    # Common patterns across tools, ordered from most specific to least
     patterns = [
-        r"\b(\d{3})\b.*\bhttps?://",       # status code before URL
+        r"CODE:(\d{3})",                    # dirb: (CODE:200|SIZE:11297)
+        r"C=(\d{3})",                       # wfuzz/dirsearch style
         r"Status:\s*(\d{3})",               # feroxbuster style
         r"\[Status:\s*(\d{3})\]",           # bracketed status
-        r"^\s*(\d{3})\s",                   # line starts with status
         r"\(Status:\s*(\d{3})\)",           # parenthesised status
+        r"^\s*(\d{3})\s",                   # line starts with status
+        r"\b(\d{3})\b.*\bhttps?://",        # status code before URL
         r"\b(\d{3})\s+\d+[A-Za-z]",        # status followed by size
-        r"C=(\d{3})",                       # wfuzz/dirsearch style
         r"\|\s*(\d{3})\s*\|",              # pipe-delimited
     ]
 
@@ -116,16 +117,22 @@ def parse_url(line: str) -> str:
     """Extract URL from a tool output line."""
     match = re.search(r"(https?://\S+)", line)
     if match:
-        return match.group(1).rstrip(",;])")
+        url = match.group(1)
+        # Strip trailing noise: parenthesised metadata, punctuation
+        url = re.sub(r"\s*\(CODE:.*", "", url)
+        url = re.sub(r"\s*\(Status:.*", "", url)
+        url = url.rstrip(",;])(")
+        return url
     return ""
 
 
 def parse_size(line: str) -> int:
     """Extract response size from a tool output line."""
     patterns = [
-        r"Size:\s*(\d+)",
-        r"\b(\d+)[Bb]\b",
-        r"\|\s*(\d+)\s*\|",
+        r"SIZE:(\d+)",             # dirb: (CODE:200|SIZE:11297)
+        r"Size:\s*(\d+)",          # feroxbuster/ffuf style
+        r"\b(\d+)[Bb]\b",         # standalone byte count
+        r"\|\s*(\d+)\s*\|",       # pipe-delimited
     ]
     for pattern in patterns:
         match = re.search(pattern, line)
@@ -148,3 +155,45 @@ def parse_finding(line: str) -> Finding | None:
         url=url,
         size=size,
     )
+
+
+def parse_progress(line: str) -> tuple[int, int] | None:
+    """Parse tool-specific progress from an output or stderr line.
+
+    Returns (completed, total) if a progress indicator is found, else None.
+    Supports: gobuster, ffuf, wfuzz, dirsearch, feroxbuster, dirb.
+    """
+    patterns = [
+        # gobuster: "Progress: 1234 / 5000 (24.68%)"
+        r"Progress:\s*(\d+)\s*/\s*(\d+)",
+        # ffuf: ":: Progress: [1234/5000]"
+        r"Progress:\s*\[(\d+)/(\d+)\]",
+        # feroxbuster: "1234/5000"  or  "Scanned 1234/5000"
+        r"(?:Scanned\s+)?(\d+)/(\d+)",
+        # wfuzz: "Total requests: 5000" (only total, not progress)
+        # dirsearch: "45%" style
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, line)
+        if match:
+            completed = int(match.group(1))
+            total = int(match.group(2))
+            if total > 0 and completed <= total:
+                return (completed, total)
+
+    # dirsearch percentage: "45%"
+    pct_match = re.search(r"\b(\d{1,3})%", line)
+    if pct_match:
+        pct = int(pct_match.group(1))
+        if 0 < pct <= 100:
+            return (pct, 100)
+
+    return None
+
+
+def parse_dirb_downloaded(line: str) -> int | None:
+    """Parse dirb's final DOWNLOADED count from output."""
+    match = re.search(r"DOWNLOADED:\s*(\d+)", line)
+    if match:
+        return int(match.group(1))
+    return None
