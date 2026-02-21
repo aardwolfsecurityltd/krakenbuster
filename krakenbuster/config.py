@@ -34,7 +34,18 @@ def load_config() -> configparser.ConfigParser:
         config[section] = values
 
     if CONFIG_PATH.exists():
-        config.read(CONFIG_PATH)
+        try:
+            config.read(CONFIG_PATH)
+        except (configparser.MissingSectionHeaderError, configparser.ParsingError):
+            # Existing file is from an older version without section headers.
+            # Back it up and write a fresh config with proper sections.
+            backup = CONFIG_PATH.with_suffix(".conf.bak")
+            CONFIG_PATH.rename(backup)
+            save_config(config)
+            print(
+                f"Migrated configuration: old file backed up to {backup}, "
+                f"new config written to {CONFIG_PATH}"
+            )
     else:
         save_config(config)
         print(f"Created default configuration at {CONFIG_PATH}")
