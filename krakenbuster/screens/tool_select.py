@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Vertical
+from textual.containers import Center, Vertical
 from textual.screen import Screen
-from textual.widgets import Header, Label, RadioButton, RadioSet, Static
+from textual.widgets import Button, Header, Label, RadioButton, RadioSet, Static
 
 TOOL_SUPPORT = {
     "directory": ["feroxbuster", "ffuf", "gobuster", "dirb", "wfuzz", "dirsearch"],
@@ -28,10 +28,13 @@ class ToolSelectScreen(Screen):
     """Screen for selecting the scanning tool."""
 
     BINDINGS = [
-        Binding("enter", "confirm", "Confirm"),
         Binding("q", "quit_app", "Quit"),
         Binding("escape", "go_back", "Back"),
     ]
+
+    _current_index: int = 0
+    _current_dir_index: int = 0
+    _current_vhost_index: int = 0
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -87,8 +90,10 @@ class ToolSelectScreen(Screen):
                         yield btn
 
             yield Label("", id="tool-select-description")
+            with Center():
+                yield Button("Continue", id="tool-select-continue-btn", variant="primary")
             yield Static(
-                "[dim]Use arrow keys to select, Enter to confirm, Escape to go back[/dim]",
+                "[dim]Use arrow keys to browse, press Enter or click Continue to proceed, Escape to go back[/dim]",
                 id="tool-select-hint",
             )
 
@@ -96,8 +101,34 @@ class ToolSelectScreen(Screen):
         available = getattr(self.app, "available_tools", {})
         return available.get(tool, False)
 
-    def action_confirm(self) -> None:
-        self._confirm_selection()
+    def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
+        """Confirm if user re-selected the same option (Enter on current selection)."""
+        radio_id = event.radio_set.id
+        new_index = event.radio_set.pressed_index
+
+        if radio_id == "dir-tool-radio":
+            if new_index == self._current_dir_index:
+                # Move focus to the vhost radio set for combined mode
+                try:
+                    self.query_one("#vhost-tool-radio", RadioSet).focus()
+                except Exception:
+                    pass
+            else:
+                self._current_dir_index = new_index
+        elif radio_id == "vhost-tool-radio":
+            if new_index == self._current_vhost_index:
+                self._confirm_selection()
+            else:
+                self._current_vhost_index = new_index
+        elif radio_id == "tool-radio":
+            if new_index == self._current_index:
+                self._confirm_selection()
+            else:
+                self._current_index = new_index
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "tool-select-continue-btn":
+            self._confirm_selection()
 
     def action_quit_app(self) -> None:
         self.app.exit()
