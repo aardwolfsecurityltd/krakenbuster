@@ -44,7 +44,4 @@ class DirsearchScanner(BaseScanner):
         if random_agents:
             cmd.append("--random-agent")
 
-        # Plain text output for easier parsing
-        cmd.append("--plain-text-report=/dev/null")
-
         return cmd
