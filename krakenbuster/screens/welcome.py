@@ -9,14 +9,14 @@ from textual.screen import Screen
 from textual.widgets import Button, Static
 
 BANNER = """\
-[bold magenta]
+[bold #88c0d0]
   _  __          _               ____            _
  | |/ /_ __ __ _| | _____ _ __  | __ ) _   _ ___| |_ ___ _ __
  | ' /| '__/ _` | |/ / _ \\ '_ \\ |  _ \\| | | / __| __/ _ \\ '__|
  | . \\| | | (_| |   <  __/ | | || |_) | |_| \\__ \\ ||  __/ |
  |_|\\_\\_|  \\__,_|_|\\_\\___|_| |_||____/ \\__,_|___/\\__\\___|_|
-[/bold magenta]
-[bold cyan]         Web Enumeration Toolkit v1.0.0[/bold cyan]
+[/bold #88c0d0]
+[bold white]         Web Enumeration Toolkit v1.0.0[/bold white]
 [dim]      Guided scanner orchestration for pentesters[/dim]
 """
 

@@ -96,7 +96,7 @@ class ConfirmScreen(Screen):
             scanner = create_scanner(tool, effective_mode, target, wordlist, options)
             command = scanner.build_command()
             cmd_str = " ".join(command)
-            lines.append(f"[green]$ {cmd_str}[/green]")
+            lines.append(f"[bold white]$ {cmd_str}[/bold white]")
         except Exception as exc:
             lines.append(f"[red]Error building command: {exc}[/red]")
 
@@ -110,7 +110,7 @@ class ConfirmScreen(Screen):
                     vhost_tool, "vhost", target, wordlist, vhost_options
                 )
                 vhost_cmd = vhost_scanner.build_command()
-                lines.append(f"[green]$ {' '.join(vhost_cmd)}[/green]")
+                lines.append(f"[bold white]$ {' '.join(vhost_cmd)}[/bold white]")
             except Exception as exc:
                 lines.append(f"[red]Error building vhost command: {exc}[/red]")
 
