@@ -129,6 +129,8 @@ def create_scanner(
     from krakenbuster.scanners.dirb import DirbScanner
     from krakenbuster.scanners.wfuzz import WfuzzScanner
     from krakenbuster.scanners.dirsearch import DirsearchScanner
+    from krakenbuster.scanners.amass import AmassScanner
+    from krakenbuster.scanners.subfinder import SubfinderScanner
 
     scanners: dict[str, type[BaseScanner]] = {
         "feroxbuster": FeroxbusterScanner,
@@ -137,6 +139,8 @@ def create_scanner(
         "dirb": DirbScanner,
         "wfuzz": WfuzzScanner,
         "dirsearch": DirsearchScanner,
+        "amass": AmassScanner,
+        "subfinder": SubfinderScanner,
     }
 
     scanner_class = scanners.get(tool)

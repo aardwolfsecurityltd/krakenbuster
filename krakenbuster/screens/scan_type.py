@@ -22,10 +22,6 @@ SCAN_TYPES = {
         "label": "DNS subdomain enumeration",
         "description": "Discover subdomains of the target domain via DNS resolution",
     },
-    "combined": {
-        "label": "Combined (directory + vhost)",
-        "description": "Run both directory brute-forcing and vhost fuzzing concurrently",
-    },
 }
 
 

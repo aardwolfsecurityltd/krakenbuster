@@ -65,17 +65,6 @@ class ConfirmScreen(Screen):
                     display_key = key.replace("_", " ").title()
                     lines.append(f"  {display_key}: {value}")
 
-        if scan_type == "combined":
-            vhost_tool = getattr(app, "selected_vhost_tool", "")
-            vhost_options = getattr(app, "vhost_options", {})
-            lines.append("")
-            lines.append(f"[bold]Vhost tool:[/bold] {vhost_tool}")
-            if vhost_options:
-                for key, value in vhost_options.items():
-                    if value:
-                        display_key = key.replace("_", " ").title()
-                        lines.append(f"  {display_key}: {value}")
-
         summary = self.query_one("#confirm-summary", Static)
         summary.update("\n".join(lines))
 
@@ -88,31 +77,15 @@ class ConfirmScreen(Screen):
         wordlist = getattr(app, "wordlist_path", "")
         options = getattr(app, "scan_options", {})
 
-        effective_mode = scan_type if scan_type != "combined" else "directory"
-
         lines = ["[bold]Command Preview[/bold]", ""]
 
         try:
-            scanner = create_scanner(tool, effective_mode, target, wordlist, options)
+            scanner = create_scanner(tool, scan_type, target, wordlist, options)
             command = scanner.build_command()
             cmd_str = " ".join(command)
             lines.append(f"[bold white]$ {cmd_str}[/bold white]")
         except Exception as exc:
             lines.append(f"[red]Error building command: {exc}[/red]")
-
-        if scan_type == "combined":
-            vhost_tool = getattr(app, "selected_vhost_tool", "")
-            vhost_options = getattr(app, "vhost_options", {})
-            lines.append("")
-            lines.append("[bold]Vhost command:[/bold]")
-            try:
-                vhost_scanner = create_scanner(
-                    vhost_tool, "vhost", target, wordlist, vhost_options
-                )
-                vhost_cmd = vhost_scanner.build_command()
-                lines.append(f"[bold white]$ {' '.join(vhost_cmd)}[/bold white]")
-            except Exception as exc:
-                lines.append(f"[red]Error building vhost command: {exc}[/red]")
 
         command_widget = self.query_one("#confirm-command", Static)
         command_widget.update("\n".join(lines))
@@ -124,7 +97,7 @@ class ConfirmScreen(Screen):
             self.app.pop_screen()
 
     def _run_in_terminal(self) -> None:
-        """Build the command(s) and exit the TUI so they run in the real terminal."""
+        """Build the command and exit the TUI so it runs in the real terminal."""
         app = self.app
         tool = getattr(app, "selected_tool", "")
         scan_type = getattr(app, "scan_type", "")
@@ -132,25 +105,12 @@ class ConfirmScreen(Screen):
         wordlist = getattr(app, "wordlist_path", "")
         options = getattr(app, "scan_options", {})
 
-        effective_mode = scan_type if scan_type != "combined" else "directory"
-
         commands: list[list[str]] = []
         try:
-            scanner = create_scanner(tool, effective_mode, target, wordlist, options)
+            scanner = create_scanner(tool, scan_type, target, wordlist, options)
             commands.append(scanner.build_command())
         except Exception:
             pass
-
-        if scan_type == "combined":
-            vhost_tool = getattr(app, "selected_vhost_tool", "")
-            vhost_options = getattr(app, "vhost_options", {})
-            try:
-                vhost_scanner = create_scanner(
-                    vhost_tool, "vhost", target, wordlist, vhost_options
-                )
-                commands.append(vhost_scanner.build_command())
-            except Exception:
-                pass
 
         if commands:
             self.app.exit(result=commands)

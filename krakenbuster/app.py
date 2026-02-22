@@ -15,13 +15,13 @@ from krakenbuster.screens.options import OptionsScreen
 from krakenbuster.screens.confirm import ConfirmScreen
 
 
-TOOLS = ["feroxbuster", "ffuf", "gobuster", "dirb", "wfuzz", "dirsearch"]
+TOOLS = ["feroxbuster", "ffuf", "gobuster", "dirb", "wfuzz", "dirsearch", "amass", "subfinder"]
 
 # Which tools support which modes
 TOOL_SUPPORT = {
     "directory": ["feroxbuster", "ffuf", "gobuster", "dirb", "wfuzz", "dirsearch"],
     "vhost": ["ffuf", "gobuster", "wfuzz"],
-    "dns": ["gobuster"],
+    "dns": ["gobuster", "amass", "subfinder"],
 }
 
 
@@ -35,11 +35,9 @@ class KrakenBusterApp(App):
     available_tools: dict[str, bool] = {}
     scan_type: str = ""
     selected_tool: str = ""
-    selected_vhost_tool: str = ""  # for combined mode
     target: str = ""
     wordlist_path: str = ""
     scan_options: dict[str, str] = {}
-    vhost_options: dict[str, str] = {}
 
     def on_mount(self) -> None:
         """Check tool availability and push the welcome screen."""
@@ -80,11 +78,9 @@ class KrakenBusterApp(App):
         """Reset state and return to scan type selection."""
         self.scan_type = ""
         self.selected_tool = ""
-        self.selected_vhost_tool = ""
         self.target = ""
         self.wordlist_path = ""
         self.scan_options = {}
-        self.vhost_options = {}
         # Pop all screens back to a clean slate
         while len(self.screen_stack) > 1:
             self.pop_screen()

@@ -27,6 +27,8 @@ TOOL_INSTALL_HINTS = {
     "dirb": "sudo apt install dirb",
     "wfuzz": "sudo apt install wfuzz",
     "dirsearch": "sudo apt install dirsearch",
+    "amass": "sudo apt install amass",
+    "subfinder": "go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest",
 }
 
 
@@ -58,7 +60,8 @@ class WelcomeScreen(Screen):
         missing_any = False
 
         for tool_name in [
-            "feroxbuster", "ffuf", "gobuster", "dirb", "wfuzz", "dirsearch"
+            "feroxbuster", "ffuf", "gobuster", "dirb", "wfuzz", "dirsearch",
+            "amass", "subfinder",
         ]:
             is_available = available.get(tool_name, False)
             if is_available:
