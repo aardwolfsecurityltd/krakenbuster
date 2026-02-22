@@ -7,6 +7,7 @@ Entry point with Click CLI handling for both interactive and non-interactive mod
 from __future__ import annotations
 
 import asyncio
+import os
 import shutil
 import sys
 import time
@@ -29,12 +30,27 @@ from krakenbuster.scanners.base import create_scanner
 
 console = Console()
 
-TOOLS = ["feroxbuster", "ffuf", "gobuster", "dirb", "wfuzz", "dirsearch"]
+TOOLS = ["feroxbuster", "ffuf", "gobuster", "dirb", "wfuzz", "dirsearch", "amass", "subfinder"]
 
 
 def check_tools() -> dict[str, bool]:
     """Check which tools are available on the system."""
     return {tool: shutil.which(tool) is not None for tool in TOOLS}
+
+
+def _execute_commands(commands: list[list[str]]) -> None:
+    """Execute the command directly in the terminal after TUI exits."""
+    if not commands:
+        return
+    command = commands[0]
+    cmd_str = " ".join(command)
+    console.print(f"\n[bold cyan]KrakenBuster[/bold cyan] running: [green]{cmd_str}[/green]\n")
+
+    try:
+        os.execvp(command[0], command)
+    except FileNotFoundError:
+        console.print(f"[bold red]Error:[/bold red] {command[0]} not found. Is it installed?")
+        sys.exit(1)
 
 
 async def run_cli_scan(
@@ -161,12 +177,15 @@ def cli(ctx: click.Context) -> None:
     """KrakenBuster: guided web enumeration tool for penetration testing.
 
     Run without a subcommand to launch the interactive TUI.
-    Use subcommands (dir, vhost, dns, combined) for non-interactive mode.
+    Use subcommands (dir, vhost, dns) for non-interactive mode.
     """
     if ctx.invoked_subcommand is None:
         from krakenbuster.app import KrakenBusterApp
         app = KrakenBusterApp()
-        app.run()
+        result = app.run()
+
+        if result and isinstance(result, list):
+            _execute_commands(result)
 
 
 @cli.command()
@@ -228,7 +247,7 @@ def vhost(tool, target, domain, wordlist, threads, rate, proxy, extensions,
 
 
 @cli.command()
-@click.option("--tool", required=True, type=click.Choice(["gobuster"]), help="Scanner tool to use")
+@click.option("--tool", required=True, type=click.Choice(["gobuster", "amass", "subfinder"]), help="Scanner tool to use")
 @click.option("--domain", required=True, help="Target domain")
 @_common_options
 @click.option("--resolver", default="", help="Custom DNS resolver")
@@ -250,52 +269,14 @@ def dns(tool, domain, wordlist, threads, rate, proxy, extensions, output_dir,
     asyncio.run(run_cli_scan("dns", tool, domain, wordlist, options))
 
 
-@cli.command()
-@click.option("--dir-tool", required=True, type=click.Choice(TOOLS), help="Tool for directory scanning")
-@click.option("--vhost-tool", required=True, type=click.Choice(["ffuf", "gobuster", "wfuzz"]), help="Tool for vhost fuzzing")
-@click.option("--url", required=True, help="Target URL")
-@click.option("--domain", required=True, help="Base domain for vhost fuzzing")
-@_common_options
-@click.option("--depth", default=3, help="Recursion depth for directory scan")
-def combined(dir_tool, vhost_tool, url, domain, wordlist, threads, rate, proxy,
-             extensions, output_dir, depth):
-    """Combined directory + vhost scanning mode."""
-    available = check_tools()
-    for t in [dir_tool, vhost_tool]:
-        if not available.get(t, False):
-            console.print(f"[red]Error: {t} is not installed.[/red]")
-            sys.exit(1)
-
-    dir_options = {
-        "threads": str(threads),
-        "rate_limit": str(rate),
-        "proxy": proxy,
-        "extensions": extensions,
-        "depth": str(depth),
-    }
-
-    vhost_options = {
-        "threads": str(threads),
-        "rate_limit": str(rate),
-        "proxy": proxy,
-        "domain": domain,
-    }
-
-    async def run_both() -> None:
-        await asyncio.gather(
-            run_cli_scan("directory", dir_tool, url, wordlist, dir_options),
-            run_cli_scan("vhost", vhost_tool, url, wordlist, vhost_options),
-        )
-
-    asyncio.run(run_both())
-
-
 @cli.command(name="__main__", hidden=True)
 def main_entry():
     """Support python -m krakenbuster."""
     from krakenbuster.app import KrakenBusterApp
     app = KrakenBusterApp()
-    app.run()
+    result = app.run()
+    if result and isinstance(result, list):
+        _execute_commands(result)
 
 
 if __name__ == "__main__":

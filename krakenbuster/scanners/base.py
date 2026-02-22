@@ -51,10 +51,14 @@ class BaseScanner(ABC):
         """
         command = self.build_command()
 
+        # Use a large line buffer limit (4MB) to handle tools like dirsearch
+        # that output ANSI progress bars using carriage returns without newlines,
+        # creating extremely long "lines" that exceed asyncio's default 64KB limit.
         self._process = await asyncio.create_subprocess_exec(
             *command,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            limit=4 * 1024 * 1024,
         )
 
         assert self._process.stdout is not None
@@ -125,6 +129,8 @@ def create_scanner(
     from krakenbuster.scanners.dirb import DirbScanner
     from krakenbuster.scanners.wfuzz import WfuzzScanner
     from krakenbuster.scanners.dirsearch import DirsearchScanner
+    from krakenbuster.scanners.amass import AmassScanner
+    from krakenbuster.scanners.subfinder import SubfinderScanner
 
     scanners: dict[str, type[BaseScanner]] = {
         "feroxbuster": FeroxbusterScanner,
@@ -133,6 +139,8 @@ def create_scanner(
         "dirb": DirbScanner,
         "wfuzz": WfuzzScanner,
         "dirsearch": DirsearchScanner,
+        "amass": AmassScanner,
+        "subfinder": SubfinderScanner,
     }
 
     scanner_class = scanners.get(tool)

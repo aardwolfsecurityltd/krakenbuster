@@ -1,14 +1,14 @@
 /* KrakenBuster Textual CSS Stylesheet */
-/* Colour scheme: dark background, cyan borders, magenta accents, green findings, red errors */
+/* Colour scheme: dark background, steel-blue borders, muted accents */
 
 Screen {
     background: #1a1a2e;
-    color: #e0e0e0;
+    color: #d8dee9;
 }
 
 Header {
     background: #16213e;
-    color: #e94560;
+    color: #88c0d0;
     dock: top;
 }
 
@@ -24,10 +24,10 @@ Header {
 }
 
 #tool-status {
-    border: round cyan;
+    border: round #5f87af;
     padding: 1 2;
     margin: 1 4;
-    background: #16213e;
+    background: #1e2640;
     min-width: 50;
 }
 
@@ -51,15 +51,15 @@ Header {
 }
 
 #scan-type-radio {
-    border: round cyan;
+    border: round #5f87af;
     padding: 1 2;
     margin: 1 0;
-    background: #16213e;
+    background: #1e2640;
 }
 
 #scan-type-description {
     margin: 1 0;
-    color: #a0a0a0;
+    color: #a0a8b8;
 }
 
 #scan-type-hint {
@@ -78,16 +78,16 @@ Header {
 }
 
 #tool-radio, #dir-tool-radio, #vhost-tool-radio {
-    border: round cyan;
+    border: round #5f87af;
     padding: 1 2;
     margin: 1 0;
-    background: #16213e;
+    background: #1e2640;
 }
 
 #dir-tool-label, #vhost-tool-label {
     margin-top: 1;
     text-style: bold;
-    color: #e94560;
+    color: #88c0d0;
 }
 
 #tool-select-hint {
@@ -119,12 +119,12 @@ RadioButton:disabled {
 }
 
 #target-input {
-    border: round cyan;
+    border: round #5f87af;
     margin: 1 0;
 }
 
 #target-error {
-    color: red;
+    color: #bf616a;
     margin: 0 0 1 0;
 }
 
@@ -148,7 +148,7 @@ RadioButton:disabled {
 }
 
 #wordlist-search {
-    border: round cyan;
+    border: round #5f87af;
     margin-bottom: 1;
 }
 
@@ -159,16 +159,16 @@ RadioButton:disabled {
 
 #wordlist-tree {
     width: 60%;
-    border: round cyan;
-    background: #16213e;
+    border: round #5f87af;
+    background: #1e2640;
     padding: 1;
     overflow-y: auto;
 }
 
 #wordlist-preview {
     width: 40%;
-    border: round cyan;
-    background: #16213e;
+    border: round #5f87af;
+    background: #1e2640;
     padding: 1;
     margin-left: 1;
 }
@@ -178,12 +178,12 @@ RadioButton:disabled {
 }
 
 #wordlist-manual-input {
-    border: round magenta;
+    border: round #7b88a0;
     margin: 1 0;
 }
 
 #wordlist-error {
-    color: red;
+    color: #bf616a;
     margin: 0 0 1 0;
 }
 
@@ -220,12 +220,12 @@ RadioButton:disabled {
 .option-label {
     width: 30;
     padding-right: 1;
-    color: #a0c4ff;
+    color: #88c0d0;
 }
 
 .option-row Input {
     width: 1fr;
-    border: round cyan;
+    border: round #5f87af;
 }
 
 .option-row Switch {
@@ -233,7 +233,7 @@ RadioButton:disabled {
 }
 
 #options-error {
-    color: red;
+    color: #bf616a;
     margin: 1 0;
 }
 
@@ -267,16 +267,16 @@ RadioButton:disabled {
 
 #confirm-summary {
     width: 50%;
-    border: round cyan;
-    background: #16213e;
+    border: round #5f87af;
+    background: #1e2640;
     padding: 1 2;
     margin-right: 1;
 }
 
 #confirm-command {
     width: 50%;
-    border: round magenta;
-    background: #0f3460;
+    border: round #5f87af;
+    background: #1e2640;
     padding: 1 2;
 }
 
@@ -297,8 +297,8 @@ RadioButton:disabled {
 #scan-top-bar {
     dock: top;
     height: 1;
-    background: #0f3460;
-    color: #e0e0e0;
+    background: #1e2640;
+    color: #d8dee9;
     padding: 0 1;
     text-style: bold;
 }
@@ -317,11 +317,11 @@ RadioButton:disabled {
 }
 
 #progress-panel {
-    border: round cyan;
+    border: round #5f87af;
     padding: 1;
     margin: 0 1;
     height: auto;
-    background: #16213e;
+    background: #1e2640;
 }
 
 #scan-progress {
@@ -329,29 +329,29 @@ RadioButton:disabled {
 }
 
 #progress-label {
-    color: #a0c4ff;
+    color: #88c0d0;
 }
 
 #testing-label {
-    color: #e94560;
+    color: #d08770;
 }
 
 #stats-label {
-    color: #a0a0a0;
+    color: #a0a8b8;
     margin-top: 1;
 }
 
 #findings-panel {
-    border: round cyan;
+    border: round #5f87af;
     margin: 1;
     padding: 0 1;
     height: 1fr;
-    background: #16213e;
+    background: #1e2640;
     overflow-y: auto;
 }
 
 #findings-count {
-    color: #00ff00;
+    color: #a3be8c;
     text-style: bold;
     padding: 0 0 1 0;
 }
@@ -361,46 +361,46 @@ RadioButton:disabled {
 }
 
 #vhost-progress-panel {
-    border: round magenta;
+    border: round #7b88a0;
     padding: 1;
     margin: 0 1;
     height: auto;
-    background: #16213e;
+    background: #1e2640;
 }
 
 #vhost-findings-count {
-    color: #00ff00;
+    color: #a3be8c;
     text-style: bold;
 }
 
 #raw-output {
-    border: round cyan;
+    border: round #5f87af;
     margin: 0 1;
     padding: 1;
     height: 1fr;
-    background: #0f0f23;
+    background: #131320;
 }
 
 #vhost-raw-output {
-    border: round magenta;
+    border: round #7b88a0;
     margin: 0 1;
     padding: 1;
     height: 1fr;
-    background: #0f0f23;
+    background: #131320;
 }
 
 DataTable {
-    background: #16213e;
+    background: #1e2640;
 }
 
 DataTable > .datatable--header {
-    background: #0f3460;
-    color: cyan;
+    background: #2a3555;
+    color: #88c0d0;
     text-style: bold;
 }
 
 DataTable > .datatable--cursor {
-    background: #1a1a4e;
+    background: #2e3a55;
 }
 
 /* Summary Screen */
@@ -410,17 +410,17 @@ DataTable > .datatable--cursor {
 }
 
 #summary-content {
-    border: round cyan;
+    border: round #5f87af;
     padding: 1 2;
     margin-bottom: 1;
-    background: #16213e;
+    background: #1e2640;
 }
 
 #summary-findings {
-    border: round green;
+    border: round #a3be8c;
     padding: 1 2;
     margin-bottom: 1;
-    background: #16213e;
+    background: #1e2640;
 }
 
 #summary-files {
@@ -429,10 +429,10 @@ DataTable > .datatable--cursor {
 }
 
 #summary-stderr {
-    border: round red;
+    border: round #bf616a;
     padding: 1 2;
     margin-bottom: 1;
-    background: #2a0a0a;
+    background: #2a1520;
 }
 
 #summary-buttons {
@@ -450,41 +450,41 @@ Button {
 }
 
 Button.-primary {
-    background: #0f3460;
-    color: cyan;
-    border: tall cyan;
+    background: #2a3555;
+    color: #88c0d0;
+    border: tall #5f87af;
 }
 
 Button.-primary:hover {
-    background: #16213e;
+    background: #354060;
 }
 
 Button.-success {
-    background: #064e3b;
-    color: #00ff00;
-    border: tall green;
+    background: #2b3d2b;
+    color: #a3be8c;
+    border: tall #a3be8c;
 }
 
 Button.-error {
-    background: #4a0000;
-    color: red;
-    border: tall red;
+    background: #3d2020;
+    color: #bf616a;
+    border: tall #bf616a;
 }
 
 /* Input widget global styles */
 Input {
-    background: #16213e;
-    color: #e0e0e0;
-    border: round #555555;
+    background: #1e2640;
+    color: #d8dee9;
+    border: round #4a5568;
 }
 
 Input:focus {
-    border: round cyan;
+    border: round #5f87af;
 }
 
 /* Switch styles */
 Switch {
-    background: #16213e;
+    background: #1e2640;
 }
 
 /* ProgressBar styles */
@@ -493,35 +493,35 @@ ProgressBar {
 }
 
 ProgressBar Bar {
-    color: cyan;
+    color: #88c0d0;
     background: #333333;
 }
 
 /* Tree styles */
 Tree {
-    background: #16213e;
-    color: #e0e0e0;
+    background: #1e2640;
+    color: #d8dee9;
 }
 
 Tree:focus {
-    border: round cyan;
+    border: round #5f87af;
 }
 
 Tree > .tree--cursor {
-    background: #0f3460;
+    background: #2a3555;
     color: white;
     text-style: bold;
 }
 
 Tree > .tree--guides {
-    color: #555555;
+    color: #4a5568;
 }
 
 /* RichLog styles */
 RichLog {
-    background: #0f0f23;
-    color: #e0e0e0;
-    scrollbar-color: cyan;
+    background: #131320;
+    color: #d8dee9;
+    scrollbar-color: #5f87af;
 }
 
 /* Responsive layout: narrow terminals */

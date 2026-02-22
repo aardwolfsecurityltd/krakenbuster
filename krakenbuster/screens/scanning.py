@@ -28,10 +28,17 @@ from krakenbuster.output import (
     append_raw_line,
     generate_output_paths,
     parse_finding,
+    parse_progress,
+    parse_dirb_downloaded,
     write_json_results,
 )
 from krakenbuster.scanners.base import ScanLine, create_scanner
 from krakenbuster.wordlist import count_lines
+
+# Tools that output a line per request (line count is a good progress proxy)
+_VERBOSE_TOOLS = {"feroxbuster"}
+# Tools that only output findings (need progress parsing or estimation)
+_SPARSE_TOOLS = {"dirb", "gobuster", "ffuf", "wfuzz", "dirsearch"}
 
 
 class ScanOutputLine(Message):
@@ -62,6 +69,9 @@ class ScanningScreen(Screen):
     _start_time: float = 0.0
     _total_words: int = 0
     _lines_received: int = 0
+    _requests_estimated: int = 0  # best estimate of actual requests sent
+    _progress_from_tool: bool = False  # True if tool reported its own progress
+    _configured_rate: int = 200  # configured rate limit for estimation
     _errors: int = 0
     _findings: list[Finding] = []
     _raw_lines: list[str] = []
@@ -80,6 +90,7 @@ class ScanningScreen(Screen):
     _vhost_stderr_lines: list[str] = []
     _completed_scanners: int = 0
     _total_scanners: int = 1
+    _tool_name: str = ""
 
     def compose(self) -> ComposeResult:
         scan_type = getattr(self.app, "scan_type", "directory")
@@ -149,6 +160,8 @@ class ScanningScreen(Screen):
         """Initialise state and start the scan."""
         self._start_time = time.time()
         self._lines_received = 0
+        self._requests_estimated = 0
+        self._progress_from_tool = False
         self._errors = 0
         self._findings = []
         self._raw_lines = []
@@ -160,6 +173,14 @@ class ScanningScreen(Screen):
         self._vhost_lines_received = 0
         self._vhost_raw_lines = []
         self._vhost_stderr_lines = []
+        self._tool_name = getattr(self.app, "selected_tool", "")
+
+        # Read configured rate limit for estimation fallback
+        options = getattr(self.app, "scan_options", {})
+        try:
+            self._configured_rate = int(options.get("rate_limit", "200"))
+        except (ValueError, TypeError):
+            self._configured_rate = 200
 
         # Set up findings table
         table = self.query_one("#findings-table", DataTable)
@@ -176,8 +197,8 @@ class ScanningScreen(Screen):
             except Exception:
                 pass
 
-        # Start the timer
-        self.set_interval(1.0, self._update_timer)
+        # Start the periodic stats refresh
+        self.set_interval(1.0, self._refresh_stats)
 
         # Start the scan
         self.run_worker(self._start_scan())
@@ -251,6 +272,31 @@ class ScanningScreen(Screen):
         finally:
             self.post_message(ScanComplete(scanner_id))
 
+    def _try_parse_progress(self, raw: str) -> None:
+        """Try to extract progress info from a line (stdout or stderr)."""
+        prog = parse_progress(raw)
+        if prog:
+            completed, total = prog
+            if total == 100:
+                # Percentage-based: scale to total_words
+                if self._total_words > 0:
+                    self._requests_estimated = max(
+                        self._requests_estimated,
+                        int(self._total_words * completed / 100),
+                    )
+            else:
+                self._requests_estimated = max(self._requests_estimated, completed)
+                if total > self._total_words:
+                    self._total_words = total
+            self._progress_from_tool = True
+            return
+
+        # dirb: parse DOWNLOADED count
+        dl = parse_dirb_downloaded(raw)
+        if dl:
+            self._requests_estimated = max(self._requests_estimated, dl)
+            self._progress_from_tool = True
+
     def on_scan_output_line(self, message: ScanOutputLine) -> None:
         """Handle a line of scanner output."""
         line = message.line
@@ -261,6 +307,9 @@ class ScanningScreen(Screen):
                 self._vhost_stderr_lines.append(line.raw)
             else:
                 self._stderr_lines.append(line.raw)
+            # Also check stderr for progress indicators
+            if scanner_id != "vhost":
+                self._try_parse_progress(line.raw)
             return
 
         # Track raw lines
@@ -271,6 +320,14 @@ class ScanningScreen(Screen):
             self._lines_received += 1
             self._raw_lines.append(line.raw)
             self._rate_samples.append(time.time())
+            # Check stdout for progress indicators too
+            self._try_parse_progress(line.raw)
+
+        # For verbose tools, line count is a good progress proxy
+        if self._tool_name in _VERBOSE_TOOLS and scanner_id != "vhost":
+            self._requests_estimated = max(
+                self._requests_estimated, self._lines_received
+            )
 
         # Write to raw output file
         raw_path = self._vhost_raw_path if scanner_id == "vhost" else self._raw_path
@@ -348,7 +405,7 @@ class ScanningScreen(Screen):
         result._vhost_raw_path = self._vhost_raw_path
         result._vhost_json_path = self._vhost_json_path
 
-        self.app.call_from_thread(self.app.go_to_summary, result)
+        self.app.call_later(self.app.go_to_summary, result)
 
     def _update_findings_table(self, finding: Finding) -> None:
         """Add a finding to the primary findings table."""
@@ -382,15 +439,38 @@ class ScanningScreen(Screen):
         except Exception:
             pass
 
-    def _update_timer(self) -> None:
+    def _get_estimated_requests(self, elapsed: float) -> int | None:
+        """Get the best estimate of requests completed so far.
+
+        Returns an int if we have a reliable estimate, or None if progress
+        is unknown (tool does not report progress and is not verbose).
+        """
+        # If the tool reported its own progress, use that
+        if self._progress_from_tool and self._requests_estimated > 0:
+            return self._requests_estimated
+
+        # For verbose tools, line count is accurate
+        if self._tool_name in _VERBOSE_TOOLS:
+            return self._lines_received
+
+        # No reliable progress available for this tool
+        return None
+
+    def _refresh_stats(self) -> None:
         """Update the top bar and progress stats every second."""
         elapsed = time.time() - self._start_time
         elapsed_str = self._format_elapsed(elapsed)
 
+        # Estimate requests completed (may be None if unknown)
+        est_requests = self._get_estimated_requests(elapsed)
+        progress_known = est_requests is not None
+
         # Calculate rate
-        now = time.time()
-        recent = [t for t in self._rate_samples if now - t <= 5.0]
-        rate = len(recent) / 5.0 if recent else 0.0
+        if progress_known and elapsed > 0:
+            rate = est_requests / elapsed
+            rate_str = f"{rate:.0f} req/s"
+        else:
+            rate_str = "-- req/s"
 
         # Update top bar
         tool = getattr(self.app, "selected_tool", "")
@@ -401,39 +481,55 @@ class ScanningScreen(Screen):
             top_bar = self.query_one("#scan-top-bar", Static)
             top_bar.update(
                 f"[bold]{tool}[/bold] | {target} | {wordlist} | "
-                f"Elapsed: {elapsed_str} | {rate:.0f} req/s"
+                f"Elapsed: {elapsed_str} | {rate_str}"
             )
         except Exception:
             pass
 
         # Update progress
-        if self._total_words > 0:
-            pct = min(100, (self._lines_received / self._total_words) * 100)
-            eta = self._estimate_eta(elapsed, self._lines_received, self._total_words)
+        if progress_known and self._total_words > 0:
+            pct = min(100, (est_requests / self._total_words) * 100)
+            eta = self._estimate_eta(elapsed, est_requests, self._total_words)
+            progress_text = f"Progress: {pct:.0f}%  ({est_requests:,} / {self._total_words:,})"
+            stats_text = (
+                f"Sent: {est_requests:,}   Rate: {rate_str}   "
+                f"ETA: {eta}   Findings: {len(self._findings)}   Errors: {self._errors}"
+            )
         else:
-            pct = 0
-            eta = "--"
+            # Unknown progress: show elapsed time and findings count
+            pct = None
+            progress_text = (
+                f"Progress: scanning...  ({self._total_words:,} words in wordlist)"
+            )
+            stats_text = (
+                f"Elapsed: {elapsed_str}   Output lines: {self._lines_received:,}   "
+                f"Findings: {len(self._findings)}   Errors: {self._errors}"
+            )
 
         try:
-            progress = self.query_one("#scan-progress", ProgressBar)
-            progress.update(progress=self._lines_received)
+            progress_bar = self.query_one("#scan-progress", ProgressBar)
+            if progress_known:
+                progress_bar.update(
+                    total=max(self._total_words, 1), progress=est_requests
+                )
+            else:
+                # Pulse animation: cycle progress to indicate activity
+                cycle = int(elapsed * 10) % max(self._total_words, 100)
+                progress_bar.update(
+                    total=max(self._total_words, 100), progress=cycle
+                )
         except Exception:
             pass
 
         try:
             progress_label = self.query_one("#progress-label", Label)
-            progress_label.update(
-                f"Progress: {pct:.0f}%  ({self._lines_received:,} / {self._total_words:,})"
-            )
+            progress_label.update(progress_text)
         except Exception:
             pass
 
         try:
             stats_label = self.query_one("#stats-label", Label)
-            stats_label.update(
-                f"Sent: {self._lines_received:,}   Rate: {rate:.0f} req/s   "
-                f"ETA: {eta}   Errors: {self._errors}"
-            )
+            stats_label.update(stats_text)
         except Exception:
             pass
 

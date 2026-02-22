@@ -101,6 +101,25 @@ TOOL_OPTIONS = {
             ("random_agents", "Random user agents", "true", "switch"),
         ],
     },
+    "amass": {
+        "dns": [
+            ("passive", "Passive mode only", "true", "switch"),
+            ("timeout", "Timeout (minutes)", "30", "input"),
+            ("resolver", "Custom resolver file", "", "input"),
+            ("max_dns_queries", "Max DNS queries", "", "input"),
+            ("brute_force", "Enable brute forcing", "false", "switch"),
+        ],
+    },
+    "subfinder": {
+        "dns": [
+            ("threads", "Threads", "30", "input"),
+            ("timeout", "Timeout (seconds)", "30", "input"),
+            ("max_time", "Max enumeration time (minutes)", "10", "input"),
+            ("resolver", "Custom resolver file", "", "input"),
+            ("all_sources", "Use all sources", "true", "switch"),
+            ("recursive", "Recursive enumeration", "false", "switch"),
+        ],
+    },
 }
 
 
@@ -116,16 +135,13 @@ class OptionsScreen(Screen):
         tool = getattr(self.app, "selected_tool", "feroxbuster")
         scan_type = getattr(self.app, "scan_type", "directory")
 
-        # Map combined mode to directory for the primary tool
-        effective_mode = scan_type if scan_type != "combined" else "directory"
-
         with Vertical(id="options-container"):
             yield Static(
-                f"[bold cyan]Step 5:[/bold cyan] Configure {tool} Options ({effective_mode} mode)",
+                f"[bold cyan]Step 5:[/bold cyan] Configure {tool} Options ({scan_type} mode)",
                 id="options-title",
             )
 
-            options = self._get_options(tool, effective_mode)
+            options = self._get_options(tool, scan_type)
             for key, label, default, widget_type in options:
                 with Horizontal(classes="option-row"):
                     yield Label(f"{label}:", classes="option-label")
@@ -142,31 +158,6 @@ class OptionsScreen(Screen):
                             placeholder=placeholder,
                             id=f"opt-{key}",
                         )
-
-            # If combined mode, also show vhost tool options
-            if scan_type == "combined":
-                vhost_tool = getattr(self.app, "selected_vhost_tool", "ffuf")
-                yield Static(
-                    f"\n[bold cyan]Vhost tool options:[/bold cyan] {vhost_tool}",
-                    id="vhost-options-title",
-                )
-                vhost_options = self._get_options(vhost_tool, "vhost")
-                for key, label, default, widget_type in vhost_options:
-                    with Horizontal(classes="option-row"):
-                        yield Label(f"{label}:", classes="option-label")
-                        if widget_type == "switch":
-                            sw = Switch(
-                                value=(default.lower() in ("true", "1", "yes", "on")),
-                                id=f"vopt-{key}",
-                            )
-                            yield sw
-                        else:
-                            placeholder = "required" if key == "domain" else ""
-                            yield Input(
-                                value=default,
-                                placeholder=placeholder,
-                                id=f"vopt-{key}",
-                            )
 
             yield Label("", id="options-error")
             with Horizontal(id="options-buttons"):
@@ -192,9 +183,8 @@ class OptionsScreen(Screen):
         """Collect all option values and navigate to confirmation."""
         tool = getattr(self.app, "selected_tool", "feroxbuster")
         scan_type = getattr(self.app, "scan_type", "directory")
-        effective_mode = scan_type if scan_type != "combined" else "directory"
 
-        options = self._get_options(tool, effective_mode)
+        options = self._get_options(tool, scan_type)
         collected: dict[str, str] = {}
 
         for key, label, default, widget_type in options:
@@ -210,38 +200,12 @@ class OptionsScreen(Screen):
                 collected[key] = default
 
         # Validate required fields
-        if "domain" in collected and not collected["domain"] and effective_mode == "vhost":
+        if "domain" in collected and not collected["domain"] and scan_type == "vhost":
             error_label = self.query_one("#options-error", Label)
             error_label.update("[bold red]Base domain is required for vhost mode[/bold red]")
             return
 
         self.app.scan_options = collected
-
-        # Collect vhost options for combined mode
-        if scan_type == "combined":
-            vhost_tool = getattr(self.app, "selected_vhost_tool", "ffuf")
-            vhost_options = self._get_options(vhost_tool, "vhost")
-            vhost_collected: dict[str, str] = {}
-
-            for key, label, default, widget_type in vhost_options:
-                widget_id = f"vopt-{key}"
-                try:
-                    if widget_type == "switch":
-                        widget = self.query_one(f"#{widget_id}", Switch)
-                        vhost_collected[key] = str(widget.value).lower()
-                    else:
-                        widget = self.query_one(f"#{widget_id}", Input)
-                        vhost_collected[key] = widget.value
-                except Exception:
-                    vhost_collected[key] = default
-
-            if not vhost_collected.get("domain"):
-                error_label = self.query_one("#options-error", Label)
-                error_label.update("[bold red]Base domain is required for vhost mode[/bold red]")
-                return
-
-            self.app.vhost_options = vhost_collected
-
         self.app.go_to_confirm()
 
     def action_go_back(self) -> None:

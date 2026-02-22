@@ -9,14 +9,14 @@ from textual.screen import Screen
 from textual.widgets import Button, Static
 
 BANNER = """\
-[bold magenta]
+[bold #88c0d0]
   _  __          _               ____            _
  | |/ /_ __ __ _| | _____ _ __  | __ ) _   _ ___| |_ ___ _ __
  | ' /| '__/ _` | |/ / _ \\ '_ \\ |  _ \\| | | / __| __/ _ \\ '__|
  | . \\| | | (_| |   <  __/ | | || |_) | |_| \\__ \\ ||  __/ |
  |_|\\_\\_|  \\__,_|_|\\_\\___|_| |_||____/ \\__,_|___/\\__\\___|_|
-[/bold magenta]
-[bold cyan]         Web Enumeration Toolkit v1.0.0[/bold cyan]
+[/bold #88c0d0]
+[bold white]         Web Enumeration Toolkit v1.0.0[/bold white]
 [dim]      Guided scanner orchestration for pentesters[/dim]
 """
 
@@ -27,6 +27,8 @@ TOOL_INSTALL_HINTS = {
     "dirb": "sudo apt install dirb",
     "wfuzz": "sudo apt install wfuzz",
     "dirsearch": "sudo apt install dirsearch",
+    "amass": "sudo apt install amass",
+    "subfinder": "go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest",
 }
 
 
@@ -58,7 +60,8 @@ class WelcomeScreen(Screen):
         missing_any = False
 
         for tool_name in [
-            "feroxbuster", "ffuf", "gobuster", "dirb", "wfuzz", "dirsearch"
+            "feroxbuster", "ffuf", "gobuster", "dirb", "wfuzz", "dirsearch",
+            "amass", "subfinder",
         ]:
             is_available = available.get(tool_name, False)
             if is_available:

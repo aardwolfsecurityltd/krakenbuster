@@ -43,6 +43,7 @@ class WordlistScreen(Screen):
     _all_files: list[WordlistFile] = []
     _selected_path: str = ""
     _manual_mode: bool = False
+    _preview_base_lines: list[str] = []
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -165,7 +166,6 @@ class WordlistScreen(Screen):
 
     def _update_preview(self, path_str: str) -> None:
         """Update the preview panel with file information."""
-        preview = self.query_one("#wordlist-preview-content", Static)
         path = Path(path_str)
 
         scan_type = getattr(self.app, "scan_type", "directory")
@@ -177,17 +177,18 @@ class WordlistScreen(Screen):
         except OSError:
             size = 0
 
-        lines = [
+        self._preview_base_lines = [
             f"[bold]Path:[/bold] {path}",
             f"[bold]Size:[/bold] {human_readable_size(size)}",
         ]
 
         if is_rec:
-            lines.append("[bold green]Recommended for this scan type[/bold green]")
+            self._preview_base_lines.append("[bold green]Recommended for this scan type[/bold green]")
         else:
-            lines.append("[dim]Not a recommended wordlist for this scan type[/dim]")
+            self._preview_base_lines.append("[dim]Not a recommended wordlist for this scan type[/dim]")
 
-        preview.update("\n".join(lines))
+        preview = self.query_one("#wordlist-preview-content", Static)
+        preview.update("\n".join(self._preview_base_lines + ["[dim]Counting lines...[/dim]"]))
 
         # Count lines in background
         self.run_worker(self._count_and_update(path_str))
@@ -198,11 +199,8 @@ class WordlistScreen(Screen):
         line_count = await count_lines(path)
         if self._selected_path == path_str:
             preview = self.query_one("#wordlist-preview-content", Static)
-            current = preview.renderable
-            if isinstance(current, str):
-                preview.update(
-                    current + f"\n[bold]Lines:[/bold] {line_count:,}"
-                )
+            lines = self._preview_base_lines + [f"[bold]Lines:[/bold] {line_count:,}"]
+            preview.update("\n".join(lines))
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle manual path submission."""
