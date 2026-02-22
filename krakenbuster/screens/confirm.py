@@ -119,9 +119,41 @@ class ConfirmScreen(Screen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "run-btn":
-            self.app.go_to_scanning()
+            self._run_in_terminal()
         elif event.button.id == "back-btn":
             self.app.pop_screen()
+
+    def _run_in_terminal(self) -> None:
+        """Build the command(s) and exit the TUI so they run in the real terminal."""
+        app = self.app
+        tool = getattr(app, "selected_tool", "")
+        scan_type = getattr(app, "scan_type", "")
+        target = getattr(app, "target", "")
+        wordlist = getattr(app, "wordlist_path", "")
+        options = getattr(app, "scan_options", {})
+
+        effective_mode = scan_type if scan_type != "combined" else "directory"
+
+        commands: list[list[str]] = []
+        try:
+            scanner = create_scanner(tool, effective_mode, target, wordlist, options)
+            commands.append(scanner.build_command())
+        except Exception:
+            pass
+
+        if scan_type == "combined":
+            vhost_tool = getattr(app, "selected_vhost_tool", "")
+            vhost_options = getattr(app, "vhost_options", {})
+            try:
+                vhost_scanner = create_scanner(
+                    vhost_tool, "vhost", target, wordlist, vhost_options
+                )
+                commands.append(vhost_scanner.build_command())
+            except Exception:
+                pass
+
+        if commands:
+            self.app.exit(result=commands)
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

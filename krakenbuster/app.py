@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import shutil
-from pathlib import Path
 
 from textual.app import App
 
@@ -14,8 +13,6 @@ from krakenbuster.screens.target import TargetScreen
 from krakenbuster.screens.wordlist import WordlistScreen
 from krakenbuster.screens.options import OptionsScreen
 from krakenbuster.screens.confirm import ConfirmScreen
-from krakenbuster.screens.scanning import ScanningScreen
-from krakenbuster.screens.summary import SummaryScreen
 
 
 TOOLS = ["feroxbuster", "ffuf", "gobuster", "dirb", "wfuzz", "dirsearch"]
@@ -78,14 +75,6 @@ class KrakenBusterApp(App):
     def go_to_confirm(self) -> None:
         """Navigate to confirmation screen."""
         self.push_screen(ConfirmScreen())
-
-    def go_to_scanning(self) -> None:
-        """Navigate to scanning screen."""
-        self.push_screen(ScanningScreen())
-
-    def go_to_summary(self, result) -> None:
-        """Navigate to results summary."""
-        self.push_screen(SummaryScreen(result))
 
     def start_new_scan(self) -> None:
         """Reset state and return to scan type selection."""

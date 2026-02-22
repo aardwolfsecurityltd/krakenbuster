@@ -7,7 +7,9 @@ Entry point with Click CLI handling for both interactive and non-interactive mod
 from __future__ import annotations
 
 import asyncio
+import os
 import shutil
+import subprocess
 import sys
 import time
 
@@ -35,6 +37,30 @@ TOOLS = ["feroxbuster", "ffuf", "gobuster", "dirb", "wfuzz", "dirsearch"]
 def check_tools() -> dict[str, bool]:
     """Check which tools are available on the system."""
     return {tool: shutil.which(tool) is not None for tool in TOOLS}
+
+
+def _execute_commands(commands: list[list[str]]) -> None:
+    """Execute one or more commands directly in the terminal after TUI exits."""
+    for i, command in enumerate(commands):
+        cmd_str = " ".join(command)
+        console.print(f"\n[bold cyan]KrakenBuster[/bold cyan] running: [green]{cmd_str}[/green]\n")
+
+        try:
+            if len(commands) == 1:
+                # Single command: replace the process entirely
+                os.execvp(command[0], command)
+            else:
+                # Multiple commands (combined mode): run sequentially
+                ret = subprocess.run(command)
+                if i < len(commands) - 1:
+                    console.print(
+                        f"\n[bold cyan]Command finished with exit code {ret.returncode}.[/bold cyan]"
+                    )
+                else:
+                    sys.exit(ret.returncode)
+        except FileNotFoundError:
+            console.print(f"[bold red]Error:[/bold red] {command[0]} not found. Is it installed?")
+            sys.exit(1)
 
 
 async def run_cli_scan(
@@ -166,7 +192,10 @@ def cli(ctx: click.Context) -> None:
     if ctx.invoked_subcommand is None:
         from krakenbuster.app import KrakenBusterApp
         app = KrakenBusterApp()
-        app.run()
+        result = app.run()
+
+        if result and isinstance(result, list):
+            _execute_commands(result)
 
 
 @cli.command()
@@ -295,7 +324,9 @@ def main_entry():
     """Support python -m krakenbuster."""
     from krakenbuster.app import KrakenBusterApp
     app = KrakenBusterApp()
-    app.run()
+    result = app.run()
+    if result and isinstance(result, list):
+        _execute_commands(result)
 
 
 if __name__ == "__main__":
